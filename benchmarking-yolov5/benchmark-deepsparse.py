@@ -33,10 +33,11 @@ def benchmark_pipeline(compiled_model, image, batch_size=1, iterations=100):
         original_shape = image.shape[:2]
    
     executor = ThreadPoolExecutor(max_workers=8)
-    
+    data = [image]*batch_size
+
     start = time.perf_counter()
     for _ in range(iterations):
-        engine_inputs = [preprocess([image]*batch_size, executor)]
+        engine_inputs = [preprocess(data, executor)]
         engine_outputs = compiled_model(engine_inputs)
         outputs = postprocess(engine_outputs, original_image_shape=original_shape)
     end = time.perf_counter()
