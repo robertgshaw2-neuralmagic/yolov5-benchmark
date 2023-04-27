@@ -1,5 +1,10 @@
 # Benchmarking YOLOv5
 
+Download image:
+```bash
+wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
+```
+
 ## Benchmark DeepSparse
 
 Run the following for usage:
