@@ -10,17 +10,17 @@ wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/ma
 Run the following for usage:
 
 ```bash
-python3 benchmark_deepsparse.py --help
+python3 benchmark-deepsparse.py --help
 ```
 
 Runs at batch=1:
 ```bash
-python3 benchmark_deepsparse.py --pipeline --engine
+python3 benchmark-deepsparse.py --pipeline --engine
 ```
 
 Runs at batch=64:
 ```bash
-python3 benchmark_deepsparse.py --pipeline --engine --batch_size 64 --iterations 5
+python3 benchmark-deepsparse.py --pipeline --engine --batch_size 64 --iterations 5
 ```
 
 ## Benchmark GPU
