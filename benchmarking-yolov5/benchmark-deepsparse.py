@@ -112,7 +112,7 @@ if __name__ == '__main__':
     if args.do_pipeline:
         print("\nBenchmarking Pipeline...")
   
-        if not args.big_image:
+        if args.big_image:
             _ = benchmark_pipeline(compiled_model, np_im, args.batch_size, args.iterations)
         else:
             _ = benchmark_pipeline(compiled_model, np_im_640, args.batch_size, args.iterations)    
