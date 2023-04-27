@@ -15,12 +15,12 @@ python3 benchmark-deepsparse.py --help
 
 Runs at batch=1:
 ```bash
-python3 benchmark-deepsparse.py --do_pipeline --do_engine
+OMP_NUM_THREADS=1 python3 benchmark-deepsparse.py --do_pipeline --do_engine
 ```
 
 Runs at batch=64:
 ```bash
-python3 benchmark-deepsparse.py --do_pipeline --do_engine --batch_size 64 --iterations 5
+OMP_NUM_THREADS=1  python3 benchmark-deepsparse.py --do_pipeline --do_engine --batch_size 64 --iterations 5
 ```
 
 ## Benchmark GPU
