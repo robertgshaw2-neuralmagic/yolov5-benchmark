@@ -2,7 +2,7 @@
 
 Install:
 ```
-pip install deepsparse-nightly[yolo]
+pip install deepsparse-nightly[yolo]==1.5.0.20230420
 ```
 
 Download image:
