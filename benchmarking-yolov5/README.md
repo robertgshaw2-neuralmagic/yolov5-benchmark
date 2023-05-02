@@ -1,5 +1,10 @@
 # Benchmarking YOLOv5
 
+Install:
+```
+pip install deepsparse-nightly
+```
+
 Download image:
 ```bash
 wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
