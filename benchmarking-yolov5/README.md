@@ -22,5 +22,3 @@ Runs at batch=64:
 ```bash
 OMP_NUM_THREADS=1  python3 benchmark-deepsparse.py --do_pipeline --do_engine --batch_size 64 --iterations 5
 ```
-
-## Benchmark GPU
