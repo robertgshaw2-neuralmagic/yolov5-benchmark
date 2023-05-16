@@ -1,4 +1,4 @@
-import time, cv2, argparse
+import time, cv2, argparse, functools
 from deepsparse import Engine
 from deepsparse.yolo.utils import postprocess_nms
 from concurrent.futures import ThreadPoolExecutor
@@ -57,7 +57,7 @@ def preprocess_img(input_img, target_shape=(640,640)):
     return im
 
 def preprocess(inputs, executor, img_sz=640):
-    image_batch = list(executor.map(preprocess_img, inputs, (img_sz, img_sz)))
+    image_batch = list(executor.map(functools.partial(preprocess_img, target_shape=(img_sz, img_sz)), inputs)
     return np.ascontiguousarray(np.stack(image_batch,axis=0), dtype=np.uint8)
 
 def scale_boxes(boxes, original_image_shape, img_sz=640):
