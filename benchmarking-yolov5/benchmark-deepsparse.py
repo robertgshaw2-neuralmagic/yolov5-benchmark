@@ -14,6 +14,7 @@ parser.add_argument('--do_pipeline', action='store_true')
 parser.add_argument('--do_engine', action='store_true')
 parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--iterations', type=int, default=100)
+parser.add_argument('--img_sz', type=int, default=640)
 
 def benchmark_engine(compiled_model, image, batch_size=1, iterations=100):
     data = np.ascontiguousarray(np.stack([np.moveaxis(image,-1,0)]*batch_size))
@@ -27,9 +28,9 @@ def benchmark_engine(compiled_model, image, batch_size=1, iterations=100):
     print(f"Engine Throughput: {round(throughput,2)}")
     return throughput
 
-def benchmark_pipeline(compiled_model, image, batch_size=1, iterations=100):
+def benchmark_pipeline(compiled_model, image, batch_size=1, iterations=100, img_sz=640):
     original_shape = None
-    if image.shape[:2] != (640,640):
+    if image.shape[:2] != (img_sz,img_sz):
         original_shape = image.shape[:2]
    
     executor = ThreadPoolExecutor(max_workers=8)
@@ -37,9 +38,9 @@ def benchmark_pipeline(compiled_model, image, batch_size=1, iterations=100):
 
     start = time.perf_counter()
     for _ in range(iterations):
-        engine_inputs = [preprocess(data, executor)]
+        engine_inputs = [preprocess(data, executor, img_sz)]
         engine_outputs = compiled_model(engine_inputs)
-        outputs = postprocess(engine_outputs, original_image_shape=original_shape)
+        outputs = postprocess(engine_outputs, original_image_shape=original_shape, img_sz=img_sz)
     end = time.perf_counter()
 
     throughput = (iterations*batch_size) / (end-start)
@@ -55,17 +56,17 @@ def preprocess_img(input_img, target_shape=(640,640)):
     im = np.moveaxis(im,-1,0)
     return im
 
-def preprocess(inputs, executor):
-    image_batch = list(executor.map(preprocess_img, inputs))
+def preprocess(inputs, executor, img_sz=640):
+    image_batch = list(executor.map(preprocess_img, inputs, (img_sz, img_sz))
     return np.ascontiguousarray(np.stack(image_batch,axis=0), dtype=np.uint8)
 
-def scale_boxes(boxes, original_image_shape):
+def scale_boxes(boxes, original_image_shape, img_sz=640):
     if not original_image_shape:
         return boxes
 
     scale = np.flipud(
         np.divide(
-            np.asarray(original_image_shape), np.asarray((640,640))
+            np.asarray(original_image_shape), np.asarray((img_sz,img_sz))
         )
     )
     
@@ -73,7 +74,7 @@ def scale_boxes(boxes, original_image_shape):
     boxes = np.multiply(boxes, scale)
     return boxes
 
-def postprocess(engine_outputs, original_image_shape=None):
+def postprocess(engine_outputs, original_image_shape=None, img_sz=640):
     outputs = engine_outputs[0]
     outputs = postprocess_nms(
         outputs=outputs,
@@ -89,6 +90,7 @@ def postprocess(engine_outputs, original_image_shape=None):
             scale_boxes(
                 boxes=image_output[:, 0:4],
                 original_image_shape=original_image_shape,
+                img_sz=img_sz
             ).tolist(),
         )
         batch_scores.append(image_output[:, 4].tolist())
@@ -101,14 +103,14 @@ if __name__ == '__main__':
     
     im = Image.open(args.image_path)
     np_im = np.array(im)
-    np_im_640 = np.array(im.resize((640,640)))
+    np_im_resized = np.array(im.resize((args.img_sz, args.img_sz)))
     
     print("Compiling...")
     compiled_model = Engine(model=args.model_path, batch_size=args.batch_size)
     
     if args.do_engine:
         print("\nBenchmarking Engine...")
-        _ = benchmark_engine(compiled_model, np_im_640, args.batch_size, args.iterations)
+        _ = benchmark_engine(compiled_model, np_im_resized, args.batch_size, args.iterations)
     
     if args.do_pipeline:
         print("\nBenchmarking Pipeline...")
@@ -116,6 +118,6 @@ if __name__ == '__main__':
         if args.big_image:
             _ = benchmark_pipeline(compiled_model, np_im, args.batch_size, args.iterations)
         else:
-            _ = benchmark_pipeline(compiled_model, np_im_640, args.batch_size, args.iterations)    
+            _ = benchmark_pipeline(compiled_model, np_im_resized, args.batch_size, args.iterations, img_sz=args.img_sz)    
         
     
