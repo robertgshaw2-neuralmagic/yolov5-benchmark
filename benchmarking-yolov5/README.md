@@ -20,12 +20,12 @@ python3 benchmark-deepsparse.py --help
 
 Runs at batch=1:
 ```bash
-OMP_NUM_THREADS=1 python3 benchmark-deepsparse.py --do_pipeline --do_engine
+OMP_NUM_THREADS=1 python3 benchmark-deepsparse.py  --do_engine
 ```
 
 Runs at batch=64:
 ```bash
-OMP_NUM_THREADS=1  python3 benchmark-deepsparse.py --do_pipeline --do_engine --batch_size 64 --iterations 5
+OMP_NUM_THREADS=1  python3 benchmark-deepsparse.py --do_engine --batch_size 64 --iterations 5
 ```
 
 ## Benchmark YOLOv5
@@ -52,10 +52,10 @@ python3 benchmark-pytorch.py --help
 
 Runs at batch=1:
 ```bash
-python3 benchmark-pytorch.py --do_pipeline --do_model --model_name yolov5x6
+python3 benchmark-pytorch.py --do_model --model_name yolov5x6
 ```
 
 Runs at batch=64:
 ```bash
-python3 benchmark-pytorch.py --do_pipeline --do_model --model_name yolov5x6 --batch_size 64 --iterations 5
+python3 benchmark-pytorch.py --do_model --model_name yolov5x6 --batch_size 64 --iterations 5
 ```
