@@ -20,12 +20,12 @@ python3 benchmark-deepsparse.py --help
 
 Runs at batch=1:
 ```bash
-OMP_NUM_THREADS=1 python3 benchmark-deepsparse.py  --do_engine
+OMP_NUM_THREADS=1 python3 benchmark-deepsparse.py  --do_engine --model_path zoo:cv/detection/yolov5-x6/pytorch/ultralytics/voc/pruned75_quant-none
 ```
 
 Runs at batch=64:
 ```bash
-OMP_NUM_THREADS=1  python3 benchmark-deepsparse.py --do_engine --batch_size 64 --iterations 5
+OMP_NUM_THREADS=1  python3 benchmark-deepsparse.py --do_engine --model_path zoo:cv/detection/yolov5-x6/pytorch/ultralytics/voc/pruned75_quant-none--batch_size 64 --iterations 5
 ```
 
 ## Benchmark YOLOv5
