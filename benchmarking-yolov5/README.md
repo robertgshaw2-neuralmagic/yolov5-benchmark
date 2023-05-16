@@ -52,10 +52,10 @@ python3 benchmark-pytorch.py --help
 
 Runs at batch=1:
 ```bash
-python3 benchmark-pytorch.py --do_pipeline --do_engine
+python3 benchmark-pytorch.py --do_pipeline --do_model --model_name yolov5x6
 ```
 
 Runs at batch=64:
 ```bash
-python3 benchmark-pytorch.py --do_pipeline --do_engine --batch_size 64 --iterations 5
+python3 benchmark-pytorch.py --do_pipeline --do_model --model_name yolov5x6 --batch_size 64 --iterations 5
 ```
