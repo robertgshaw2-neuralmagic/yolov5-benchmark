@@ -13,11 +13,13 @@ transform = transforms.Compose([
 
 parser = argparse.ArgumentParser()
 
+parser.add_argument('--model_name', type=str, default="yolov5s")
 parser.add_argument('--image_path', type=str, default="basilica.jpg")
 parser.add_argument('--do_model', action='store_true')
 parser.add_argument('--do_pipeline', action='store_true')
 parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--iterations', type=int, default=100)
+parser.add_argument('--img_sz', type=int, default=640)
 parser.add_argument('--do_cpu', action='store_true')
 
 def benchmark_model(model, image, batch_size=1, iterations=100):
@@ -96,13 +98,14 @@ if __name__ == '__main__':
     if not args.do_cpu:
         device = "cuda" if torch.cuda.is_available() else "cpu"
     
+    img_sz = args.img_sz
     im = Image.open(args.image_path)
-    im = im.resize((640,640))
+    im = im.resize((img_sz,img_sz))
     im_np = np.array(im).astype(np.float32) / 255.
     im_np = np.moveaxis(im_np, -1, 0)
 
     print("Downloading...")
-    model = torch.hub.load("ultralytics/yolov5", "yolov5s")
+    model = torch.hub.load("ultralytics/yolov5", args.model_name)
     model.to(device)
     
     if args.do_model:
