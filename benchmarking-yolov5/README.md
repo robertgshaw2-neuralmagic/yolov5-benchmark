@@ -55,7 +55,7 @@ Runs at batch=1:
 python3 benchmark-pytorch.py --do_model --model_name yolov5x6 --img_sz 1280
 ```
 
-Runs at batch=32:
+Runs at batch=16:
 ```bash
-python3 benchmark-pytorch.py --do_model --model_name yolov5x6 --img_sz 1280 --batch_size 32 --iterations 5
+python3 benchmark-pytorch.py --do_model --model_name yolov5x6 --img_sz 1280 --batch_size 16 --iterations 5
 ```
