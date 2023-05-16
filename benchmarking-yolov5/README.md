@@ -23,9 +23,9 @@ Runs at batch=1:
 OMP_NUM_THREADS=1 python3 benchmark-deepsparse.py  --do_engine --model_path zoo:cv/detection/yolov5-x6/pytorch/ultralytics/voc/pruned75_quant-none --img_sz 1280
 ```
 
-Runs at batch=64:
+Runs at batch=32:
 ```bash
-OMP_NUM_THREADS=1  python3 benchmark-deepsparse.py --do_engine --model_path zoo:cv/detection/yolov5-x6/pytorch/ultralytics/voc/pruned75_quant-none --img_sz 1280 --batch_size 64 --iterations 5
+OMP_NUM_THREADS=1  python3 benchmark-deepsparse.py --do_engine --model_path zoo:cv/detection/yolov5-x6/pytorch/ultralytics/voc/pruned75_quant-none --img_sz 1280 --batch_size 32 --iterations 5
 ```
 
 ## Benchmark YOLOv5
@@ -55,7 +55,7 @@ Runs at batch=1:
 python3 benchmark-pytorch.py --do_model --model_name yolov5x6 --img_sz 1280
 ```
 
-Runs at batch=64:
+Runs at batch=32:
 ```bash
-python3 benchmark-pytorch.py --do_model --model_name yolov5x6 --img_sz 1280 --batch_size 64 --iterations 5
+python3 benchmark-pytorch.py --do_model --model_name yolov5x6 --img_sz 1280 --batch_size 32 --iterations 5
 ```
