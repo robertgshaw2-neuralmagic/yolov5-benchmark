@@ -6,15 +6,11 @@ import torchvision.transforms as transforms
 from typing import Union
 from helpers import postprocess_nms
 
-transform = transforms.Compose([
-    transforms.PILToTensor(),
-    transforms.ConvertImageDtype(torch.float)
-])
-
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--model_name', type=str, default="yolov5s")
 parser.add_argument('--image_path', type=str, default="basilica.jpg")
+parser.add_argument('--images_path', type=str, default=None)
 parser.add_argument('--do_model', action='store_true')
 parser.add_argument('--do_pipeline', action='store_true')
 parser.add_argument('--batch_size', type=int, default=1)
@@ -25,29 +21,28 @@ parser.add_argument('--do_cpu', action='store_true')
 def benchmark_model(model, image, batch_size=1, iterations=100):
     batch = torch.tensor(np.stack([image]*batch_size, axis=0))
     with torch.no_grad():
+        model.eval()
         start = time.perf_counter()
         for _ in range(iterations):
             _ = model(batch)
+        torch.cuda.synchronize()
         end = time.perf_counter()
     
     throughput = (iterations*batch_size) / (end-start)
     print(f"Engine Throughput: {round(throughput,2)}")
     return throughput
 
-def preprocess_img(input_img):
-    return transform(input_img)
-
-def preprocess(inputs, executor):
+def preprocess(inputs, executor, preprocess_img):
     image_batch = list(executor.map(preprocess_img, inputs))
     return torch.stack(image_batch)
 
-def scale_boxes(boxes, original_image_shape):
+def scale_boxes(boxes, original_image_shape, img_sz=640):
     if not original_image_shape:
         return boxes
 
     scale = np.flipud(
         np.divide(
-            np.asarray(original_image_shape), np.asarray((640,640))
+            np.asarray(original_image_shape), np.asarray((img_sz,img_sz))
         )
     )
     
@@ -55,7 +50,7 @@ def scale_boxes(boxes, original_image_shape):
     boxes = np.multiply(boxes, scale)
     return boxes
 
-def postprocess(engine_outputs, original_image_shape=None):
+def postprocess(engine_outputs, original_image_shape=None, img_sz=640):
     outputs = postprocess_nms(
         outputs=engine_outputs,
         iou_thres=0.25,
@@ -70,6 +65,7 @@ def postprocess(engine_outputs, original_image_shape=None):
             scale_boxes(
                 boxes=image_output[:, 0:4],
                 original_image_shape=original_image_shape,
+                img_sz=img_sz
             ).tolist(),
         )
         batch_scores.append(image_output[:, 4].tolist())
@@ -77,19 +73,49 @@ def postprocess(engine_outputs, original_image_shape=None):
 
     return batch_boxes, batch_scores, batch_labels
 
-def benchmark_pipeline(model, image, batch_size=1, iterations=100):
+def benchmark_pipeline(model, data, batch_size=1, iterations=100, img_sz=640):
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Resize((img_sz,img_sz)),
+        transforms.ConvertImageDtype(torch.float)
+    ])
+    
+    if len(data.shape) == 3:
+        if data.shape[:2] != (img_sz,img_sz):
+            original_shape = data.shape[:2]
+        batch = [data]*batch_size
+            
+        def get_batches(items):
+            batches = items * iterations
+            for batch in batches:
+                yield batch
+            
+    else:
+        assert len(data.shape) == 4
+        if data.shape[1:3] != (img_sz,img_sz):
+            original_shape = data.shape[1:3]
+        data = list(data)
+        
+        def get_batches(items):
+            for i in range(0, len(items), batch_size):
+                yield items[i:i+batch_size]
+    
     executor = ThreadPoolExecutor(max_workers=8)
-    batch = [image]*batch_size
     
     with torch.no_grad():
+        model.eval()
         start = time.perf_counter()
-        for _ in range(iterations):
-            model_inputs = preprocess(batch, executor)
+        i = 0
+        for batch in get_batches(data):
+            print(f"{i} / {len(data) // batch_size}")
+            model_inputs = preprocess(batch, executor, transform)
             model_outputs = model(model_inputs)
-            outputs = postprocess(model_outputs) 
+            outputs = postprocess(model_outputs, original_image_shape=original_shape, img_sz=img_sz)
+            i += 1
+        torch.cuda.synchronize()
         end = time.perf_counter()
     
-    throughput = (iterations*batch_size) / (end-start)
+    throughput = len(data) / (end-start)
     print(f"Pipeline Throughput: {round(throughput,2)}")
     
 if __name__ == '__main__':
@@ -103,6 +129,9 @@ if __name__ == '__main__':
     im = im.resize((img_sz,img_sz))
     im_np = np.array(im).astype(np.float32) / 255.
     im_np = np.moveaxis(im_np, -1, 0)
+    
+    if args.images_path is not None:
+        imgs_np = np.load(img_path)
 
     print("Downloading...")
     model = torch.hub.load("ultralytics/yolov5", args.model_name)
@@ -115,7 +144,10 @@ if __name__ == '__main__':
     
     if args.do_pipeline:
         print("\nBenchmarking Pipeline...")
-        print(f"Running with torch.__version__=={torch.__version__} on device=={device}") 
-        _ = benchmark_pipeline(model=model, image=im, batch_size=args.batch_size, iterations=args.iterations)
+        print(f"Running with torch.__version__=={torch.__version__} on device=={device}")
+        if args.images_path is not None:
+            _ = benchmark_pipeline(model=model, image=imgs_np, batch_size=args.batch_size, iterations=args.iterations, img_sz=img_sz)
+        else:
+            _ = benchmark_pipeline(model=model, image=im, batch_size=args.batch_size, iterations=args.iterations)
         
     
